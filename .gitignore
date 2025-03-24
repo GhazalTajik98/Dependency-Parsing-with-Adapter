@@ -131,7 +131,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-
+coli_project/
 # Spyder project settings
 .spyderproject
 .spyproject
