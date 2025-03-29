@@ -1,6 +1,6 @@
 import torch
 from transformers import XLMRobertaModel
-from config import BASE_MODEL_NAME, DEVICE
+from config import BASE_MODEL_NAME, DEVICE, RELATION_NUM
 
 
 class InitialModel(torch.nn.Module):
@@ -206,16 +206,16 @@ class ExtendedModelWithHoulsby(torch.nn.Module):
 
 
 
-def model_initializing(model_name, hidden_dim, output_dim, relation_num, trained_base_model=None):
+def model_initializing(model_name, hidden_dim=768, output_dim=256, relation_num=RELATION_NUM, trained_base_model=None):
     match model_name:
         case "base":
             model = InitialModel(hidden_dim, output_dim, relation_num)
 
         case "pfeiffer":
-            model = ExtendedModelWithP(trained_base_model, adapter_dim=64)
+            model = ExtendedModelWithPfeiffer(trained_base_model, adapter_dim=64)
 
         case "hously":
-            model = ExtendedModelWithPfeiffer(trained_base_model, adapter_dim=64)
+            model = ExtendedModelWithHoulsby(trained_base_model, adapter_dim=64)
         
     model.to(DEVICE)
     return model

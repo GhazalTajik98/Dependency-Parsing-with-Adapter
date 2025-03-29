@@ -2,6 +2,7 @@
 import torch
 import numpy as np
 from ufal.chu_liu_edmonds import chu_liu_edmonds
+from config import DEVICE
 
 def count_parameters(model):
     total_params = sum(p.numel() for p in model.parameters())
@@ -15,10 +16,10 @@ def evaluate(model, dataloader):
     total_tokens, correct_heads, correct_heads_and_rels = 0, 0, 0
     with torch.no_grad():
         for batch in dataloader:
-            input_ids = batch["input_ids"].to(model.device)
-            attention_mask = batch["attention_mask"].to(model.device)
-            head_labels = batch["head"].to(model.device)
-            deprel_ids = batch["deprel_ids"].to(model.device)
+            input_ids = batch["input_ids"].to(DEVICE)
+            attention_mask = batch["attention_mask"].to(DEVICE)
+            head_labels = batch["head"].to(DEVICE)
+            deprel_ids = batch["deprel_ids"].to(DEVICE)
 
             outputs = model(input_ids, attention_mask)
             arc_scores = outputs['arc_scores']
@@ -26,8 +27,8 @@ def evaluate(model, dataloader):
 
             predicted_heads = torch.argmax(arc_scores, dim=2)
             batch_size, seq_len = predicted_heads.shape
-            batch_idx = torch.arange(batch_size)[:, None].expand(-1, seq_len).to(model.device)
-            dep_idx = torch.arange(seq_len)[None, :].expand(batch_size, -1).to(model.device)
+            batch_idx = torch.arange(batch_size)[:, None].expand(-1, seq_len).to(DEVICE)
+            dep_idx = torch.arange(seq_len)[None, :].expand(batch_size, -1).to(DEVICE)
             rel_scores_for_predicted_heads = rel_scores[batch_idx, dep_idx, predicted_heads, :]
             predicted_rels = torch.argmax(rel_scores_for_predicted_heads, dim=2)
 

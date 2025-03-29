@@ -10,7 +10,7 @@ DATASET_NAME = ENGLISH_DATASET_NAME
 
 # Project settings
 PROJECT_NAME = "TokenDependency"
-EXPERIMENT_NAME = "DataDragon2"
+EXPERIMENT_NAME = "COLI_PROJECT"
 
 # Dependency relations
 ALL_DEPRELS = [
@@ -30,9 +30,11 @@ HIDDEN_DIM = 768
 OUTPUT_DIM = 256
 RELATION_NUM = len(ALL_DEPRELS)
 SKIP_INDEX = -100
-EPOCHS = 3
+EPOCHS = 15
 LEARNING_RATE = 1e-4
 BATCH_SIZE = 32
 BASE_MODEL_NAME = "xlm-roberta-base"
+SAVED_MODEL_NAME = "base_model.pth"
+
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'

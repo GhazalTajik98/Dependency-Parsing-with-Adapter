@@ -2,8 +2,9 @@
 import torch
 from tqdm import tqdm
 import wandb
-from config import PROJECT_NAME, EPOCHS, LEARNING_RATE, SKIP_INDEX, RELATION_NUM, DEVICE
-from utils import evaluate, mst_parsing
+from config import PROJECT_NAME, EPOCHS, LEARNING_RATE, SKIP_INDEX, RELATION_NUM, DEVICE, SAVED_MODEL_NAME, HIDDEN_DIM, OUTPUT_DIM
+from utils import evaluate, mst_parsing, count_parameters
+from models import model_initializing
 import os
 
 
@@ -21,7 +22,7 @@ def start_wandb(experiment_name, wandb_config=None):
     return wandb
 
 
-def train(model, data, experiment_name, save_model=False, model_name=None):
+def train(model, data, experiment_name, save_model=False):
     # Initialize Weights & Biases (wandb) for experiment tracking
     start_wandb(experiment_name)
 
@@ -107,7 +108,7 @@ def train(model, data, experiment_name, save_model=False, model_name=None):
         })
 
     if save_model:
-        checkpoint_path = f"{model_name}.pth"
+        checkpoint_path = SAVED_MODEL_NAME
         torch.save(model.state_dict(), checkpoint_path)
 
     # Finalize wandb run
@@ -115,9 +116,17 @@ def train(model, data, experiment_name, save_model=False, model_name=None):
 
     return model
 
+def train_extended_models(extended_model_name, experiment_name, dataset):
+    base_model = model_initializing("base", hidden_dim=HIDDEN_DIM, output_dim=OUTPUT_DIM, relation_num=RELATION_NUM)
+    base_model.load_state_dict(torch.load(SAVED_MODEL_NAME))
+
+    pfeiffer_extended_model = model_initializing(extended_model_name, trained_base_model=base_model)
+    count_parameters(pfeiffer_extended_model)   
+    model = train(pfeiffer_extended_model, dataset, experiment_name, save_model=False)
+    return model
 
 
-def test_model(model, test_loader, device, checkpoint_path=None):
+def test_model2(model, test_loader, checkpoint_path=None):
     """
     Evaluates the model on the test dataset, optionally loads a checkpoint, and logs the accuracy.
 
@@ -133,20 +142,20 @@ def test_model(model, test_loader, device, checkpoint_path=None):
     # Check if a checkpoint exists and load it
     if checkpoint_path and os.path.exists(checkpoint_path):
         print(f"Loading model checkpoint from {checkpoint_path}...")
-        model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+        model.load_state_dict(torch.load(checkpoint_path, map_location=DEVICE))
 
     # Move the model to the appropriate device
-    model.to(device)
+    model.to(DEVICE)
     model.eval()  # Set the model to evaluation mode
 
     # Evaluate the model on the test set
     test_accuracy = evaluate(model, test_loader)  # Assume the `evaluate` function is defined elsewhere
-    test_uas = metrics['UAS']
-    test_las = metrics['LAS']
-    print(f"Test UAS: {val_uas:.4f}, LAS: {val_las:.4f}")
+    test_uas = test_accuracy['UAS']
+    test_las = test_accuracy['LAS']
+    print(f"Test UAS: {test_uas:.4f}, LAS: {test_las:.4f}")
 
-    uas = mst_parsing(model, test_loader, device)
-    print(f"Unlabeled Attachment Score (UAS): {uas:.4f}")
+    mst_uas = mst_parsing(model, test_loader, DEVICE)
+    print(f"Unlabeled Attachment Score (UAS): {mst_uas:.4f}")
 
 
     return test_accuracy
